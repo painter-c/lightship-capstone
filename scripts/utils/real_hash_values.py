@@ -7,23 +7,23 @@
 import pandas as pd
 
 #this is the generaic path 
-path = "/Users/carlinoreilly/Desktop"
+path = "../../data/set_1/"
 
 # imports csv files to thier corosponding varriables 
 
-dataAccount = pd.read_csv (path+'/lightship_csv/account.csv',keep_default_na=False, na_values=['_'])  
-dataMember = pd.read_csv (path+'/lightship_csv/membership.csv',keep_default_na=False, na_values=['_'])  
-dataTask_event_observers = pd.read_csv (path+'/lightship_csv/task_event_observers.csv',keep_default_na=False, na_values=['_'])  
-dataTask_event_old_observers = pd.read_csv (path+'/lightship_csv/task_event_old_observers.csv',keep_default_na=False, na_values=['_'])  
-dataTask_event_old_teams = pd.read_csv (path+'/lightship_csv/task_event_old_teams.csv',keep_default_na=False, na_values=['_'])   
-dataTask_event_teams = pd.read_csv (path+'/lightship_csv/task_event_teams.csv',keep_default_na=False, na_values=['_'])  
-dataTask_event = pd.read_csv (path+'/lightship_csv/task_event.csv',keep_default_na=False, na_values=['_']) 
-dataTask_observers = pd.read_csv (path+'/lightship_csv/task_observers.csv',keep_default_na=False, na_values=['_']) 
-dataTask_teams = pd.read_csv (path+'/lightship_csv/task_teams.csv',keep_default_na=False, na_values=['_']) 
-dataTask = pd.read_csv (path+'/lightship_csv/task.csv',keep_default_na=False, na_values=['_'])
-dataTask_details_keywords = pd.read_csv (path+'/lightship_csv/task_details_keyword_hashes.csv',keep_default_na=False, na_values=['_'])
-dataTask_title_keyword = pd.read_csv (path+'/lightship_csv/task_title_keyword_hashes.csv',keep_default_na=False, na_values=['_'])
-dataTask_comment_event_keyword = pd.read_csv (path+'/lightship_csv/task_comment_event_keyword_hashes.csv',keep_default_na=False, na_values=['_'])
+dataAccount = pd.read_csv (path+'account.csv',keep_default_na=False, na_values=['_'])  
+dataMember = pd.read_csv (path+'membership.csv',keep_default_na=False, na_values=['_'])  
+dataTask_event_observers = pd.read_csv (path+'task_event_observers.csv',keep_default_na=False, na_values=['_'])  
+dataTask_event_old_observers = pd.read_csv (path+'task_event_old_observers.csv',keep_default_na=False, na_values=['_'])  
+dataTask_event_old_teams = pd.read_csv (path+'task_event_old_teams.csv',keep_default_na=False, na_values=['_'])   
+dataTask_event_teams = pd.read_csv (path+'task_event_teams.csv',keep_default_na=False, na_values=['_'])  
+dataTask_event = pd.read_csv (path+'task_event.csv',keep_default_na=False, na_values=['_']) 
+dataTask_observers = pd.read_csv (path+'task_observers.csv',keep_default_na=False, na_values=['_']) 
+dataTask_teams = pd.read_csv (path+'task_teams.csv',keep_default_na=False, na_values=['_']) 
+dataTask = pd.read_csv (path+'task.csv',keep_default_na=False, na_values=['_'])
+dataTask_details_keywords = pd.read_csv (path+'keyword_data/task_details_keyword_hashes.csv',keep_default_na=False, na_values=['_'])
+dataTask_title_keyword = pd.read_csv (path+'keyword_data/task_title_keyword_hashes.csv',keep_default_na=False, na_values=['_'])
+dataTask_comment_event_keyword = pd.read_csv (path+'keyword_data/task_comment_event_keyword_hashes.csv',keep_default_na=False, na_values=['_'])
 
 # reads only predufined data i thought was usefull for each sheet. 
 
