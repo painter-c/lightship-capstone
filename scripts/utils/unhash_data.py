@@ -8,6 +8,7 @@
 
 import pandas as pd
 from csv_loader import load_lightship_data
+from task_event_filter import filter_task_events
 
 
 # Builds a dictionary object that maps hash values to keywords using a
@@ -59,31 +60,37 @@ def unhash_task_df(title_kw_df, details_kw_df, task_df):
 # Return a new dataframe with the columns: [content, task_id]
 def unhash_task_comment_event_df(task_comment_event_kw_df, task_event_df):
     task_comment_event_kw_dict = load_hash_table(task_comment_event_kw_df)
+    task_comment_event_df = filter_task_events(task_event_df, 'CommentEvent',
+                                               ['task_id', 'content'])
 
     unhashed_obj = {}
-    unhashed_obj['content'] = unhash_column(task_comment_event_kw_dict, task_event_df, 'content')
-
-    # TODO attach task id to comment events
-    return _
+    unhashed_obj['task_id'] = task_comment_event_df['task_id'].tolist()
+    unhashed_obj['content'] = unhash_column(task_comment_event_kw_dict,
+                                            task_comment_event_df,
+                                            'content')
+    return pd.DataFrame(unhashed_obj)
+    
 
 
 ################
 # Example usages
 ################
 
-ls_data = load_lightship_data(['task.csv',
-                               'task_event.csv',
-                               'task_comment_event_keyword_hashes.csv',
-                               'task_details_keyword_hashes.csv',
-                               'task_title_keyword_hashes.csv'])
-
-task_df_unhashed = unhash_task_df(ls_data['task_title_keyword_hashes'],
-                                  ls_data['task_details_keyword_hashes'],
-                                  ls_data['task'])
-
-print(task_df_unhashed.head())
-
-
-
+##ls_data = load_lightship_data(['task.csv',
+##                               'task_event.csv',
+##                               'task_comment_event_keyword_hashes.csv',
+##                               'task_details_keyword_hashes.csv',
+##                               'task_title_keyword_hashes.csv'])
+##
+##task_df_unhashed = unhash_task_df(ls_data['task_title_keyword_hashes'],
+##                                  ls_data['task_details_keyword_hashes'],
+##                                  ls_data['task'])
+##
+##print(task_df_unhashed.head())
+##
+##comments_unhashed = unhash_task_comment_event_df(ls_data['task_comment_event_keyword_hashes'],
+##                                                 ls_data['task_event'])
+##
+##print(comments_unhashed.head())
 
 
