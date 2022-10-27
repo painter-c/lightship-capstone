@@ -13,7 +13,13 @@ def unhash_transform(df, hash_table):
         else:
             out = col
     return out
-        
+
+def _mean_word_embedding(text, kv_list):
+    words = text.split()
+    return kv_list.get_mean_vector(words)
+
+def word_embedding_transform(X, kv_list):
+    pass
 
 def dayofweek_transform(df):
     out = []
