@@ -1,5 +1,20 @@
 import numpy as np
 
+from utils import unhash_data
+
+def unhash_transform(df, hash_table):
+    out = []
+    for name in df.columns:
+        col = df[name]
+        col = col.apply(unhash_data.unhash_str, args=(hash_table,))
+        col = col.to_numpy().reshape(-1, 1)
+        if len(out):
+            out = np.hstack((out, col))
+        else:
+            out = col
+    return out
+        
+
 def dayofweek_transform(df):
     out = []
     for name in df.columns:

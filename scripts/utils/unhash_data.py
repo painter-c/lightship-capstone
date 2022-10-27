@@ -7,9 +7,6 @@
 ## Conversion of hashed lightship data to unhashed data frames.
 
 import pandas as pd
-from csv_loader import load_lightship_data
-from task_event_filter import filter_task_events
-
 
 # Builds a dictionary object that maps hash values to keywords using a
 # dataframe constructed from the keyword tables provided by lightship.
@@ -19,9 +16,18 @@ def load_hash_table(hash_df):
         hash_table[row.token_hash] = row.token
     return hash_table
 
+# Returns a hash table constructed from multiple hash dataframes.
+def load_hash_tables(hash_dfs):
+    final_table = {}
+    for df in hash_dfs:
+        hash_table = load_hash_table(df)
+        final_table.update(hash_table)
+    return final_table
 
 # Use a hash table created by load_hash_table to unhash a hashed string.
-def unhash_str(hash_table, hashed):
+def unhash_str(hashed, hash_table):
+    if not isinstance(hashed, str):
+        return None
     tokens = hashed.split(' ')
     unhashed = []
     for token in tokens:
@@ -35,7 +41,7 @@ def unhash_str(hash_table, hashed):
 def unhash_column(hash_table, dataframe, column):
     unhashed = []
     for row in dataframe.itertuples(index=False):
-        unhashed.append(unhash_str(hash_table, str(row._asdict()[column])))
+        unhashed.append(unhash_str(str(row._asdict()[column]), hash_table))
     return unhashed
 
 
@@ -56,19 +62,19 @@ def unhash_task_df(title_kw_df, details_kw_df, task_df):
     return task_df_unhashed
 
 
-# Unhashes the content column of the dataframe corresponding to task_event.csv.
-# Return a new dataframe with the columns: [content, task_id]
-def unhash_task_comment_event_df(task_comment_event_kw_df, task_event_df):
-    task_comment_event_kw_dict = load_hash_table(task_comment_event_kw_df)
-    task_comment_event_df = filter_task_events(task_event_df, 'CommentEvent',
-                                               ['task_id', 'content'])
-
-    unhashed_obj = {}
-    unhashed_obj['task_id'] = task_comment_event_df['task_id'].tolist()
-    unhashed_obj['content'] = unhash_column(task_comment_event_kw_dict,
-                                            task_comment_event_df,
-                                            'content')
-    return pd.DataFrame(unhashed_obj)
+### Unhashes the content column of the dataframe corresponding to task_event.csv.
+### Return a new dataframe with the columns: [content, task_id]
+##def unhash_task_comment_event_df(task_comment_event_kw_df, task_event_df):
+##    task_comment_event_kw_dict = load_hash_table(task_comment_event_kw_df)
+##    task_comment_event_df = filter_task_events(task_event_df, 'CommentEvent',
+##                                               ['task_id', 'content'])
+##
+##    unhashed_obj = {}
+##    unhashed_obj['task_id'] = task_comment_event_df['task_id'].tolist()
+##    unhashed_obj['content'] = unhash_column(task_comment_event_kw_dict,
+##                                            task_comment_event_df,
+##                                            'content')
+##    return pd.DataFrame(unhashed_obj)
     
 
 
