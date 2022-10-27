@@ -5,6 +5,14 @@ from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.impute import MissingIndicator, SimpleImputer
 
+def _build_ct_unhash(hash_table):
+    return make_column_transformer(
+        (FunctionTransformer(
+            T.unhash_transform,
+            kw_args={'hash_table':hash_table}),
+         ['title', 'details'])
+    )
+
 def _build_pipeline_ohe():
     return make_pipeline(
         make_column_transformer(
