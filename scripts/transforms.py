@@ -1,6 +1,39 @@
 import numpy as np
 
 from utils import unhash_data
+from utils import text_misc
+
+def lowercase_transform(X):
+    return np.char.lower(X.astype(str))
+
+_rem_dup_func = np.frompyfunc(text_misc.remove_duplicates, 1, 1)
+
+def remove_duplicate_words_transform(X):
+    out = None
+    for col in X.T:
+        new_col = _rem_dup_func(col)
+        new_col = new_col.reshape(-1, 1)
+        if out is None:
+            out = new_col
+        else:
+            out = np.hstack((out, new_col))
+    return out
+
+_extract_func = np.vectorize(text_misc.extract_words_by_tag,
+                             excluded={'tag', 'spacy_nlp'})
+
+def word_tag_transform(X, tag, spacy_nlp):
+    out = None
+    for col in X.T:
+        print(col.shape)
+        new_col = _extract_func(col, tag, spacy_nlp)
+        new_col = new_col.reshape(-1, 1)
+        if out is None:
+            out = new_col
+        else:
+            out = np.hstack((out, new_col))
+    return out
+    
 
 def unhash_transform(df, hash_table):
     out = []
@@ -44,18 +77,15 @@ def word_embed_transform(X, kv_list):
             out = np.hstack((out, embed_col))
     return out
 
-# Input:
-#   The unhashed title and details columns
-#
-# Output:
-#   Combined title and details columns
-#
-def combine_title_details_transform(X):
-    # Add space to titles otherwise last word from title and first word of 
-    # details will be combined.
-    c_title = X[:,0] + ' '
-    c_details = X[:,1]
-    return np.char.add(c_title.astype(str), c_details.astype(str))
+_merge_str_func = np.frompyfunc(text_misc.join_string, 2, 1)
+
+def merge_string_cols_transform(X):
+    X_T = X.T
+    out = X_T[0]
+    for i in range(1, X_T.shape[0]):
+        curr = X_T[i]
+        out = _merge_str_func(out, curr)
+    return out
 
 def dayofweek_transform(df):
     out = []
@@ -86,4 +116,3 @@ def timeofday_transform(df):
         else:
             out = new_col
     return out
-

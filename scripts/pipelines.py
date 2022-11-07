@@ -35,7 +35,7 @@ def build_pipeline_bagofwords(hash_table):
         # Unhash title and details columns
         _build_ct_unhash(hash_table),
         # Combine title and details columns
-        FunctionTransformer(T.combine_title_details_transform),
+        FunctionTransformer(T.merge_string_cols_transform),
         # Generate sparse matrix of keyword occurences
         CountVectorizer()
     )
