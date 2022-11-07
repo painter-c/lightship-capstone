@@ -1,0 +1,4 @@
+cache_location = "cache/"
+
+[datasets]
+set_1 = "data/set_1/"

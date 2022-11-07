@@ -1,7 +1,7 @@
-import numpy as np
+from src.utils import unhash_data
+from src.utils import text_misc
 
-from utils import unhash_data
-from utils import text_misc
+import numpy as np
 
 def lowercase_transform(X):
     return np.char.lower(X.astype(str))

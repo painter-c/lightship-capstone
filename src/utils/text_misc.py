@@ -37,4 +37,11 @@ def remove_duplicates(text):
     return ' '.join(list(set(text.split())))
 
 def join_string(a, b):
-    return ' '.join((a, b))
+    if a is None and b is not None:
+        return b
+    elif b is None and a is not None:
+        return a
+    elif a is None and b is None:
+        return ''
+    else:
+        return ' '.join((a, b))

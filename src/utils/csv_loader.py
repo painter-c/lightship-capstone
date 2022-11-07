@@ -1,8 +1,6 @@
 import pandas as pd
 
-DATA_PATH = '../data/set_1/'
-
-def load_lightship_data(files='all', data_path=DATA_PATH):
+def load_lightship_data(data_path, files='all'):
     
     lightship_data = {}
 
