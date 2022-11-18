@@ -25,10 +25,13 @@ ht = load_hash_tables([ls['task_title_keyword_hashes'],
 
 task_df = ls['task']
 task_df = task_df[task_df['assignee_id'].notnull()]
+task_df = task_df[task_df['creator_id'].ne('4b5f8672-2180-4507-a694-4926e0da7f83')]
 
 kw_df = task_df[['title', 'details']]
 
 model_name = 'glove-wiki-gigaword-50'
+#model_name = 'word2vec-google-news-300'
+#model_name = 'fasttext-wiki-news-subwords-300'
 model_path = cfg['cache_location'] + model_name + '.kv'
 
 kv_list = None
@@ -45,5 +48,5 @@ clf_pipe = make_pipeline(
 
 y = task_df['assignee_id']
 
-scores = cross_val_score(clf_pipe, kw_df, y, scoring='accuracy')
+scores = cross_val_score(clf_pipe, kw_df, y, cv=3, scoring='balanced_accuracy')
 print(scores.mean())

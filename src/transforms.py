@@ -25,7 +25,6 @@ _extract_func = np.vectorize(text_misc.extract_words_by_tag,
 def word_tag_transform(X, tag, spacy_nlp):
     out = None
     for col in X.T:
-        print(col.shape)
         new_col = _extract_func(col, tag, spacy_nlp)
         new_col = new_col.reshape(-1, 1)
         if out is None:

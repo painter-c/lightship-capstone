@@ -21,7 +21,8 @@ def load_lightship_data(data_path, files='all'):
     if files == 'all' or 'task.csv' in files:
         lightship_data['task'] = pd.read_csv(
             data_path + 'task.csv',
-            parse_dates=[1,2,8])
+            parse_dates=[1,2,8],
+            dtype={'title':str, 'details':str})
 
     if files == 'all' or 'task_event.csv' in files:
         lightship_data['task_event'] = pd.read_csv(
@@ -50,7 +51,7 @@ def load_lightship_data(data_path, files='all'):
 
     if files == 'all' or 'task_teams.csv' in files:
         lightship_data['task_teams'] = pd.read_csv(
-            DATA_PATH + 'task_teams.csv')
+            data_path + 'task_teams.csv')
 
     if files == 'all' or 'team.csv' in files:
         lightship_data['team'] = pd.read_csv(

@@ -21,15 +21,16 @@ ht = load_hash_tables([ls['task_title_keyword_hashes'],
 
 task_df = ls['task']
 task_df = task_df[task_df['assignee_id'].notnull()]
+task_df = task_df[task_df['creator_id'].ne('4b5f8672-2180-4507-a694-4926e0da7f83')]
 
 kw_df = task_df[['title', 'details']]
 
 clf_pipe = make_pipeline(
     build_pipeline_bagofwords(ht),
-    LogisticRegression()
+    LogisticRegression(max_iter=1000)
 )
 
 y = task_df['assignee_id']
 
-scores = cross_val_score(clf_pipe, kw_df, y, scoring='accuracy')
+scores = cross_val_score(clf_pipe, kw_df, y, cv=3, scoring='accuracy')
 print(scores.mean())

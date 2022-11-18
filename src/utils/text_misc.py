@@ -34,6 +34,8 @@ def extract_words_by_tag(text, tag, spacy_nlp):
     return ' '.join(words)
 
 def remove_duplicates(text):
+    if text is None:
+        return ''
     return ' '.join(list(set(text.split())))
 
 def join_string(a, b):

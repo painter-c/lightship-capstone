@@ -51,6 +51,10 @@ def build_pipeline_word2vec(hash_table, kv_list):
     return make_pipeline(
         # Unhash title and details columns
         _build_ct_unhash(hash_table),
+        # Make lowercase
+        FunctionTransformer(T.lowercase_transform),
+        # Remove duplicate words from each blob of text
+        FunctionTransformer(T.remove_duplicate_words_transform),
         # Generate word embeddings
         FunctionTransformer(T.word_embed_transform,
                             kw_args={'kv_list':kv_list})
