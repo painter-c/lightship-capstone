@@ -46,6 +46,9 @@ def unhash_transform(df, hash_table):
             out = col
     return out
 
+def unhash_column(column, keyword_hash):
+    return column.apply(unhash_data.unhash_str, args=(keyword_hash,))
+
 def _word_embed_transform_col(col, kv_list):
     out = None
     for text in col:
