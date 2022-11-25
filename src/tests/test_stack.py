@@ -22,7 +22,7 @@ import os
 
 cfg = config.load()
 
-ls = load_lightship_data(cfg['datasets']['set_1'],
+ls = load_lightship_data(cfg['data_path'],
                          ['task.csv',
                           'task_title_keyword_hashes.csv',
                           'task_details_keyword_hashes.csv',
@@ -80,13 +80,9 @@ ps = clf.predict_proba(X_test)
 for i in range(ps.shape[0]):
     p_row = ps[i]
     print(f'Expected: {acc_dict[y_test.iat[i]]}')
-    reccs = util_misc.get_acc_reccomendations(p_row,
-                                              clf.classes_,
-                                              acc_dict)
-    for j, recc in enumerate(reccs):
-        print(f'{j}. {recc.name} {recc.account_id} {recc.probability:.10f}')
+    recs = util_misc.get_acc_recommendations(p_row,
+                                             clf.classes_,
+                                             acc_dict)
+    for j, rec in enumerate(recs):
+        print(f'{j}. {rec["account_name"]} {rec["account_id"]} {rec["probability"]:.10f}')
     print()
-    
-y_pred = clf.predict(X_test)
-score = top_k_accuracy_score(y_test, ps, k=3, labels=clf.classes_)
-print(score)
