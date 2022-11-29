@@ -3,15 +3,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from src.utils.csv_loader import load_lightship_data
+from src.utils.loading import load_lightship_data
 
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import MinMaxScaler
 
 cf = config.load()
 
-ls = load_lightship_data(cf['datasets']['set_1'],
-                         ['task.csv', 'account.csv'])
+ls = load_lightship_data(cf, ['task.csv', 'account.csv'])
 
 df = ls['task']
 

@@ -1,12 +1,11 @@
 import sys
 import os.path as path
-import src.utils.config
-import src.utils.csv_loader as csv_loader
-import src.utils.unhash_data as unhash
-import src.utils.util_misc as util_misc
+import src.utils.config as confg
+import src.utils.common as common
+import src.utils.loading as loading
 import src.transforms as transforms
-import src.pipelines_refactored as pipelines
-import src.utils.reporting as report
+import src.pipelines as pipelines
+import src.utils.reporting as reporting
 import gensim.downloader as gensim_api
 import gensim.models as gensim_models
 import numpy as np
@@ -69,7 +68,7 @@ def load_required_files(config):
     # Ensure all required files are present
     check_required_files(data_path, keyword_path)
     # All files are present, load them
-    return csv_loader.load_lightship_data(config, REQUIRED_FILES)
+    return loading.load_lightship_data(config, REQUIRED_FILES)
 
 
 def load_gensim_model(config):
@@ -85,20 +84,13 @@ def load_gensim_model(config):
         exit_fatal(f'"{config["kv_model"]}" is not a valid Gensim model.')
 
 
-# Generate a binary mask to filter out target classes with a total count 
-# less than n.
-def mask_low_frequency(data, n):
-    target = data['assignee_id']
-    vals, counts = np.unique(target, return_counts=True)
-    return np.isin(target, vals[counts >= n])
-
-
 def initial_preprocessing(input_data, keyword_table, config):
     # Filter null assignees and auto-generated tasks
-    result = input_data[input_data['assignee_id'].notnull()]
-    result = result[result['creator_id'].ne(config['automated_account_id'])]
+    result = common.filter_null(input_data, 'assignee_id')
+    result = common.filter_neq(result, 'creator_id', config['automated_account_id'])
     # Remove instances that belong to a target class with less than 5 classes
-    result = result[mask_low_frequency(result, 5)]
+    mask = common.mask_low_frequency(result['assignee_id'], 5)
+    result = result[mask]
     # Unhash the title and details columns
     if config['unhashing_enabled']:
         result['title'] = transforms.unhash_column(result['title'], keyword_table)
@@ -143,14 +135,14 @@ def cache_model(model, config):
 def main():
 
     # DATA LOADING PHASE
-    config = src.utils.config.load()
+    config = confg.load()
     frames = load_required_files(config)
     input_data = frames['task']
-    keyword_table = unhash.load_hash_tables(
+    keyword_table = common.load_hash_tables(
         [frames['task_title_keyword_hashes'],
          frames['task_details_keyword_hashes']])
     kv_model = load_gensim_model(config)
-    account_lookup = util_misc.get_account_name_dict(frames['account'])
+    account_lookup = common.get_account_name_dict(frames['account'])
     
     # PREPROCESSING PHASE
     input_data = initial_preprocessing(input_data, keyword_table, config)
@@ -181,7 +173,7 @@ def default_evaluation(input_data, kv_model, config, account_lookup):
     task_ids = input_data['id'].to_numpy()
     
     # REPORTING PHASE
-    report_builder = report.ReportBuilder(min_spacing=10)
+    report_builder = reporting.ReportBuilder(min_spacing=10)
     report_builder.data_summary(input_data, config)
     report_builder.configuration(config)
     report_builder.classification(y_pred, y_test, y_prob)
@@ -203,7 +195,7 @@ def warm_start_evaluation(input_data, config, account_lookup):
     task_ids = input_data['id'].to_numpy()
     
     # REPORTING PHASE
-    report_builder = report.ReportBuilder(min_spacing=10)
+    report_builder = reporting.ReportBuilder(min_spacing=10)
     report_builder.data_summary(input_data, config)
     report_builder.configuration(config)
     report_builder.classification(y_pred, y_test, y_prob)

@@ -1,53 +1,55 @@
 import src.utils.config as config
+import src.utils.common as common
+import src.utils.loading as loading
+import src.pipelines as pipelines
 
-from src.pipelines import build_pipeline_A
-from src.utils.csv_loader import load_lightship_data
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.ensemble import RandomForestClassifier
 
-from sklearn.pipeline import make_pipeline
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import cross_val_score
-
-import sklearn.linear_model as lm
-import sklearn.ensemble as en
-import sklearn.svm as sv
-import sklearn.neural_network as nn
+import numpy as np
 
 cfg = config.load()
 
-df = load_lightship_data(cfg,
-                         ['task.csv'])
+REQUIRED_FILES = ['task.csv']
 
-df = df['task']
-df = df[df['assignee_id'].notnull()]
+data = loading.load_lightship_data(cfg, REQUIRED_FILES)
 
-y = df['assignee_id']
+task_data = data['task']
 
-ests = [
-    lm.LogisticRegression(max_iter=1000),
-    lm.PassiveAggressiveClassifier(),
-    lm.Perceptron(),
-    lm.RidgeClassifier(),
-    lm.SGDClassifier(),
-    en.AdaBoostClassifier(),
-    en.BaggingClassifier(),
-    en.ExtraTreesClassifier(),
-    en.GradientBoostingClassifier(),
-    en.RandomForestClassifier(),
-    #sv.LinearSVC(max_iter=10000),
-    sv.SVC(),
-    nn.MLPClassifier(max_iter=1000)
-]
+# Initial preprocessing
+# 1. Filter null targets
+task_data = common.filter_null(task_data, 'assignee_id')
 
-score_method = 'accuracy'
-est_scores = []
-for est in ests:
-    pipe = make_pipeline(build_pipeline_A(), est)
-    scores = cross_val_score(pipe, df, y, cv=5, scoring=score_method)
-    est_scores.append((est.__class__.__name__, scores.mean()))
-    #print(f'{est.__class__.__name__} accuracy: {scores.mean()}')
+# 2. Filter automated entries
+task_data = common.filter_neq(task_data, 'creator_id', cfg['automated_account_id'])
 
-est_scores.sort(key = lambda x: x[1], reverse=True)
+# 3. Filter low frequency target classes (< 5)
+mask = common.mask_low_frequency(task_data['assignee_id'], 5)
+task_data = task_data[mask]
 
-print('Accuracy scores:')
-for i, entry in enumerate(est_scores):
-    print(f'{i}. {entry[0]}: {entry[1]}')
+# Randomized search
+
+# Create the random grid
+param_grid = {
+    'clf': [RandomForestClassifier()],
+    'clf__n_estimators': [int(x) for x in np.linspace(200, 2000, 10)],
+    'clf__max_depth': [int(x) for x in np.linspace(10, 110, num = 11)] + [None],
+    'clf__min_samples_split': [2, 5, 10],
+    'clf__min_samples_leaf': [1, 2, 4],
+    'clf__bootstrap': [True, False]
+}
+
+rf_random = RandomizedSearchCV(
+    estimator=pipelines.pipeline_task(),
+    param_distributions=param_grid,
+    n_iter=100,
+    cv=3,
+    verbose=2,
+    random_state=42,
+    n_jobs=-1)
+
+y = task_data['assignee_id']
+
+rf_random.fit(task_data, y)
+print(rf_random.best_params_)
+print(rf_random.best_score_)

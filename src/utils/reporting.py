@@ -1,4 +1,4 @@
-import src.utils.util_misc as util_misc
+import src.utils.common as com
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import balanced_accuracy_score
@@ -50,7 +50,7 @@ class ReportBuilder:
         
     
     def __build_recommendation(self, task_id, probs, y_true, y_class, account_lookup, config):
-        recs = util_misc.get_acc_recommendations(probs, y_class, account_lookup)
+        recs = com.get_acc_recommendations(probs, y_class, account_lookup)
         if len(recs) >= config['max_recommendations']:
             recs = recs[:config['max_recommendations']]
         result = f'Task id: {task_id}\n'
@@ -134,28 +134,4 @@ class ReportBuilder:
         timestamp = timestamp.strftime('%Y%m%dT%H%M%S')
         filepath = out_dir + 'Report ' + timestamp + '.txt'
         with open(filepath, mode='w') as f:
-            f.write(self.__coalesce())
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+            f.write(self.__coalesce())      

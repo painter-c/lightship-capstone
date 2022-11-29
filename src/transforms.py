@@ -1,19 +1,17 @@
-from src.utils import unhash_data
-from src.utils import text_misc
-
+import src.utils.common as com
 import numpy as np
 import pandas as pd
 
-def lowercase_transform(X):
+def to_lowercase(X):
     return np.char.lower(X.astype(str))
 
 
-_rem_dup_func = np.frompyfunc(text_misc.remove_duplicates, 1, 1)
+__rem_dup_func = np.frompyfunc(com.remove_duplicates, 1, 1)
 
-def remove_duplicate_words_transform(X):
+def remove_duplicate_words(X):
     out = None
     for col in X.T:
-        new_col = _rem_dup_func(col)
+        new_col = __rem_dup_func(col)
         new_col = new_col.reshape(-1, 1)
         if out is None:
             out = new_col
@@ -22,10 +20,10 @@ def remove_duplicate_words_transform(X):
     return out
 
 
-_extract_func = np.vectorize(text_misc.extract_words_by_tag,
+_extract_func = np.vectorize(com.extract_words_by_tag,
                              excluded={'tag', 'spacy_nlp'})
 
-def word_tag_transform(X, tag, spacy_nlp):
+def tag_words(X, tag, spacy_nlp):
     out = None
     for col in X.T:
         new_col = _extract_func(col, tag, spacy_nlp)
@@ -37,11 +35,11 @@ def word_tag_transform(X, tag, spacy_nlp):
     return out
     
 
-def unhash_transform(df, hash_table):
+def unhash_keywords(df, hash_table):
     out = []
     for name in df.columns:
         col = df[name]
-        col = col.apply(unhash_data.unhash_str, args=(hash_table,))
+        col = col.apply(com.unhash_str, args=(hash_table,))
         col = col.to_numpy().reshape(-1, 1)
         if len(out):
             out = np.hstack((out, col))
@@ -51,10 +49,10 @@ def unhash_transform(df, hash_table):
 
 
 def unhash_column(column, keyword_hash):
-    return column.apply(unhash_data.unhash_str, args=(keyword_hash,))
+    return column.apply(com.unhash_str, args=(keyword_hash,))
 
 
-def _word_embed_transform_col(col, kv_list):
+def __vectorize_word_column(col, kv_list):
     out = None
     for text in col:
         keys = text.split() if text is not None else []
@@ -74,11 +72,11 @@ def _word_embed_transform_col(col, kv_list):
     return out
 
 
-def word_embed_transform(X, kv_list):
+def vectorize_words(X, kv_list):
     out = None
     for i_col in range(X.shape[1]):
         col = X[:,i_col]
-        embed_col = _word_embed_transform_col(col, kv_list)
+        embed_col = __vectorize_word_column(col, kv_list)
         if out is None:
             out = embed_col
         else:
@@ -86,14 +84,14 @@ def word_embed_transform(X, kv_list):
     return out
 
 
-_merge_str_func = np.frompyfunc(text_misc.join_string, 2, 1)
+__merge_str_func = np.frompyfunc(com.join_string, 2, 1)
 
-def merge_string_cols_transform(X):
+def merge_string_cols(X):
     X_T = X.T
     out = X_T[0]
     for i in range(1, X_T.shape[0]):
         curr = X_T[i]
-        out = _merge_str_func(out, curr)
+        out = __merge_str_func(out, curr)
     return out
 
 
@@ -141,33 +139,4 @@ def team_target_transform(task_df, team_dict):
     team_df = pd.DataFrame(data=team_list, columns = ['task_id', 'team_id'])
     result = task_df.merge(team_df, left_on='id', right_on='task_id')
     result.drop('task_id', axis=1, inplace=True)
-    return result
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
+    return result  

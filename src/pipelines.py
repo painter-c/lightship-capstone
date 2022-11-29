@@ -1,88 +1,59 @@
-import src.transforms as T
+import src.transforms as tf
 
-from sklearn.pipeline import make_union, make_pipeline
-from sklearn.compose import make_column_transformer
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.impute import MissingIndicator, SimpleImputer
+from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import StackingClassifier
 
-def _build_ct_unhash(hash_table):
-    return make_column_transformer(
-        (FunctionTransformer(
-            T.unhash_transform,
-            kw_args={'hash_table':hash_table}),
-         ['title', 'details'])
-    )
+def clf_default():
+    return LogisticRegression()
 
-def _build_pipeline_ohe():
-    return make_pipeline(
-        make_column_transformer(
-            (FunctionTransformer(T.dayofweek_transform), ['created']),
-            (MissingIndicator(), ['due_date']),
-            ('passthrough', ['project_id', 'creator_id'])
-        ),
-        OneHotEncoder(handle_unknown='ignore')
-    )
+def ord_passthrough():
+    return ColumnTransformer([
+        ('passthrough', 'passthrough', ['project_id', 'creator_id'])
+    ])
 
-# Input:
-#   Hashed title and details columns
-#
-# Output:
-#   Sparse matrix of keyword occurences
-#
-def build_pipeline_bagofwords(hash_table):
-    return make_pipeline(
-        # Unhash title and details columns
-        _build_ct_unhash(hash_table),
-        # Combine title and details columns
-        FunctionTransformer(T.merge_string_cols_transform),
-        # Generate sparse matrix of keyword occurences
-        CountVectorizer()
-    )
+def pipeline_ohe():
+    return Pipeline([
+        ('ordinal-passthrough', ord_passthrough()),
+        ('ohe', OneHotEncoder(handle_unknown='ignore'))
+    ])
 
-# Input:
-#   Hashed title and detail columns
-#
-# Output:
-#   Title and detail columns transformed into sentence-level word
-#   embeddings.
-#
-def build_pipeline_word2vec(hash_table, kv_list):
-    return make_pipeline(
-        # Unhash title and details columns
-        _build_ct_unhash(hash_table),
-        # Make lowercase
-        FunctionTransformer(T.lowercase_transform),
-        # Remove duplicate words from each blob of text
-        FunctionTransformer(T.remove_duplicate_words_transform),
-        # Generate word embeddings
-        FunctionTransformer(T.word_embed_transform,
-                            kw_args={'kv_list':kv_list})
-    )
+def text_passthrough():
+    return ColumnTransformer([
+        ('passthrough', 'passthrough', ['title', 'creator_id'])
+    ])
 
-# Input:
-#   Entire task column with assignee_id removed
-#
-# Output:
-#   Following columns one-hot encoded:
-#      Day of the week (from created)
-#      Has due date (from missing values of due_date)
-#      project_id
-#      creator_id
-#
-#   A timeofday column (from created)
-#   priority column
-#
-#   * All columns are imputed at the end of the pipeline
-#
-def build_pipeline_A():
-    return make_pipeline(
-        make_union(
-            _build_pipeline_ohe(),
-            make_column_transformer(
-                (FunctionTransformer(T.timeofday_transform), ['created']),
-                ('passthrough', ['priority'])
-            )
-        ),
-        SimpleImputer(strategy='mean')
-    )
+def pipeline_count_vectorizer():
+    return Pipeline([
+        ('passthrough', text_passthrough()),
+        ('merge-string', FunctionTransformer(tf.merge_string_cols)),
+        ('count-vectorizer', CountVectorizer()),
+        ('clf', clf_default())
+    ])
+
+def pipeline_word_vectorizer(kv_list):
+    return Pipeline([
+        ('passthrough', text_passthrough()),
+        ('lowercase', FunctionTransformer(tf.to_lowercase)),
+        ('duplicates', FunctionTransformer(tf.remove_duplicate_words)),
+        ('vectorizer', FunctionTransformer(tf.vectorize_words, kw_args={'kv_list':kv_list})),
+        ('clf', clf_default())
+    ])
+
+def pipeline_task(clf=clf_default()):
+    return Pipeline([
+        ('ohe', pipeline_ohe()),
+        ('impute', SimpleImputer(strategy='mean')),
+        ('clf', clf)
+    ])
+
+def pipeline_master(kv_list):
+    return StackingClassifier([
+        ('task', pipeline_task()),
+        ('count', pipeline_count_vectorizer()),
+        ('word', pipeline_word_vectorizer(kv_list))
+    ])
