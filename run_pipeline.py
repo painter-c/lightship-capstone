@@ -23,7 +23,7 @@ REQUIRED_FILES = ['task_title_keyword_hashes.csv',
 
 def exit_fatal(error):
     print('Error:', error)
-    exit()
+    sys.exit()
 
 
 def warm_start_enabled():
@@ -39,10 +39,12 @@ def warm_start_path():
                        'flag. \nUsage: -warm_start path/to/data/')
 
 
-def check_required_files(data_path):
+def check_required_files(data_path, keyword_path):
     has_missing = False
     for file in REQUIRED_FILES:
-        if not path.exists(data_path + file):
+        in_data_path = path.exists(data_path + file)
+        in_keyword_path = path.exists(keyword_path + file)
+        if not in_data_path and not in_keyword_path:
             print(f'Missing file: {data_path+file}')
             has_missing = True
     if has_missing:
@@ -58,13 +60,16 @@ def get_data_path(config):
 
 def load_required_files(config):
     data_path = get_data_path(config)
+    keyword_path = config['keyword_path']
     # Ensure the provided data path exists
     if not path.exists(data_path):
         exit_fatal(f'Data path "{data_path}" was not found.')
+    if not path.exists(keyword_path):
+        exit_fatal(f'Keyword path "{keyword_path}" was not found.')
     # Ensure all required files are present
-    check_required_files(data_path)
+    check_required_files(data_path, keyword_path)
     # All files are present, load them
-    return csv_loader.load_lightship_data(data_path, REQUIRED_FILES)
+    return csv_loader.load_lightship_data(config, REQUIRED_FILES)
 
 
 def load_gensim_model(config):

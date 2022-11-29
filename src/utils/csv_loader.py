@@ -1,6 +1,9 @@
 import pandas as pd
 
-def load_lightship_data(data_path, files='all'):
+def load_lightship_data(config, files='all'):
+    
+    data_path = config['data_path']
+    keyword_path = config['keyword_path']
     
     lightship_data = {}
 
@@ -60,15 +63,15 @@ def load_lightship_data(data_path, files='all'):
 
     if files == 'all' or 'task_comment_event_keyword_hashes.csv' in files:
         lightship_data['task_comment_event_keyword_hashes'] = pd.read_csv(
-            data_path + 'keyword_data/task_comment_event_keyword_hashes.csv')
+            keyword_path + 'task_comment_event_keyword_hashes.csv')
             
     if files == 'all' or 'task_details_keyword_hashes.csv' in files:
         lightship_data['task_details_keyword_hashes'] = pd.read_csv(
-            data_path + 'keyword_data/task_details_keyword_hashes.csv')
+            keyword_path + 'task_details_keyword_hashes.csv')
 
     if files == 'all' or 'task_title_keyword_hashes.csv' in files:
         lightship_data['task_title_keyword_hashes'] = pd.read_csv(
-            data_path + 'keyword_data/task_title_keyword_hashes.csv')
+            keyword_path + 'task_title_keyword_hashes.csv')
 
     return lightship_data
                     
