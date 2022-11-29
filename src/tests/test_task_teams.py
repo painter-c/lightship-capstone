@@ -14,7 +14,7 @@ from sklearn.linear_model import LogisticRegression
 
 config = cfg.load()
 
-all_data = csv.load_lightship_data(config['data_path'],
+all_data = csv.load_lightship_data(config,
                                    ['task.csv',
                                     'task_teams.csv',
                                     'task_title_keyword_hashes.csv',

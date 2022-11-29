@@ -15,7 +15,7 @@ import os
 
 cfg = config.load()
 
-ls = load_lightship_data(cfg['datasets']['set_1'],
+ls = load_lightship_data(cfg,
                          ['task.csv',
                           'task_title_keyword_hashes.csv',
                           'task_details_keyword_hashes.csv'])

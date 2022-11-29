@@ -14,7 +14,7 @@ import sklearn.neural_network as nn
 
 cfg = config.load()
 
-df = load_lightship_data(cfg['datasets']['set_1'],
+df = load_lightship_data(cfg,
                          ['task.csv'])
 
 df = df['task']

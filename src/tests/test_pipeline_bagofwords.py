@@ -14,7 +14,7 @@ files = ['task.csv',
          'task_title_keyword_hashes.csv',
          'task_details_keyword_hashes.csv']
 
-ls = load_lightship_data(cfg['datasets']['set_1'], files)
+ls = load_lightship_data(cfg, files)
 
 ht = load_hash_tables([ls['task_title_keyword_hashes'],
                        ls['task_details_keyword_hashes']])

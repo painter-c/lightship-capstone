@@ -11,8 +11,7 @@ from sklearn.model_selection import train_test_split
 
 cfg = config.load()
 
-ls = load_lightship_data(cfg['datasets']['set_1'],
-                         ['task.csv', 'account.csv'])
+ls = load_lightship_data(cfg, ['task.csv', 'account.csv'])
 
 df = ls['task']
 df = df[df['assignee_id'].notnull()]
