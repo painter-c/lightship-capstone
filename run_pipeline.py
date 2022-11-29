@@ -6,14 +6,13 @@ import src.utils.unhash_data as unhash
 import src.utils.util_misc as util_misc
 import src.transforms as transforms
 import src.pipelines_refactored as pipelines
+import src.utils.reporting as report
 import gensim.downloader as gensim_api
 import gensim.models as gensim_models
 import numpy as np
 import pickle
-import sklearn.metrics as metrics
 from sklearn.ensemble import StackingClassifier
-from sklearn.model_selection import cross_val_score, train_test_split
-
+from sklearn.model_selection import train_test_split
 
 
 REQUIRED_FILES = ['task_title_keyword_hashes.csv',
@@ -136,44 +135,6 @@ def cache_model(model, config):
         exit_fatal('Model caching failed (unserializable object encountered).')
 
 
-def report_configuration(config):
-    print('*** RUN CONFIGURATION ***')
-    print(f'Keyword unhashing enabled            {config["unhashing_enabled"]}')
-    print(f'Task pipeline enabled                {config["task_pipe_enabled"]}')
-    print(f'Word vectorization pipeline enabled  {config["wordvec_pipe_enabled"]}')
-    print(f'Count vectorization pipeline enabled {config["countvec_pipe_enabled"]}')
-    if config['wordvec_pipe_enabled']:
-        print(f'Word vectorization model name: {config["kv_model"]}')
-    print()
-
-def report_input_data(input_data, test_size):
-    print('*** INPUT DATA ***')
-    total_examples = input_data.shape[0]
-    test_examples = int(total_examples * test_size)
-    train_examples = total_examples - test_examples 
-    print(f'Example count:      {total_examples}')
-    print(f'Test size:          {test_examples}')
-    print(f'Train size:         {train_examples}')
-    print()
-
-
-def report_classification(y_pred, y_true, y_prob):
-    print('*** CLASSIFICATION RESULT ***')
-    acc = metrics.accuracy_score(y_true, y_pred)
-    bal_acc = metrics.balanced_accuracy_score(y_true, y_pred)
-    top_2 = metrics.top_k_accuracy_score(y_true, y_prob, k=2)
-    top_3 = metrics.top_k_accuracy_score(y_true, y_prob, k=3)
-    f1_macro = metrics.f1_score(y_true, y_pred, average='macro')
-    roc_auc = metrics.roc_auc_score(y_true, y_prob, multi_class='ovo')
-    print(f'Accuracy:           {acc}')
-    print(f'Balanced accuracy   {bal_acc}')
-    print(f'Top 2 accuracy:     {top_2}')
-    print(f'Top 3 accuracy:     {top_3}')
-    print(f'F1 score (macro):   {f1_macro}')
-    print(f'Roc auc (ovo):      {roc_auc}')
-    print()
-
-
 def main():
 
     # DATA LOADING PHASE
@@ -191,14 +152,14 @@ def main():
     
     # MODEL EVALUATION PHASE
     if warm_start_enabled():
-        warm_start_evaluation(input_data, kv_model, config)
+        warm_start_evaluation(input_data, kv_model, account_lookup)
     elif config['grid_search_enabled']:
-        grid_search_evaluation(input_data, kv_model, config)
+        grid_search_evaluation(input_data, kv_model, account_lookup)
     else:
-        default_evaluation(input_data, kv_model, config)
+        default_evaluation(input_data, kv_model, config, account_lookup)
     
 
-def default_evaluation(input_data, kv_model, config):
+def default_evaluation(input_data, kv_model, config, account_lookup):
     
     y = input_data['assignee_id']
     
@@ -211,14 +172,20 @@ def default_evaluation(input_data, kv_model, config):
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     y_prob = clf.predict_proba(X_test)
+    y_class = clf.classes_
+    task_ids = input_data['id'].to_numpy()
     
     # REPORTING PHASE
-    report_input_data(input_data, test_size)
-    report_configuration(config)
-    report_classification(y_pred, y_test, y_prob)
+    report_builder = report.ReportBuilder(min_spacing=10)
+    report_builder.data_summary(input_data, config)
+    report_builder.configuration(config)
+    report_builder.classification(y_pred, y_test, y_prob)
+    report_builder.recommendations(task_ids, y_test, y_prob, y_class, account_lookup, config)
+    report_builder.print_report()
+    report_builder.save_report(config['report_location'])
 
 
-def warm_start_evaluation(input_data, config):
+def warm_start_evaluation(input_data, config, account_lookup):
     
     # Load cached model
     clf = load_cached_model(config)
@@ -227,14 +194,19 @@ def warm_start_evaluation(input_data, config):
     y_test = input_data['assignee_id']
     y_pred = clf.predict(X_test)
     y_prob = clf.predict_proba(X_test)
+    y_class = clf.classes_
+    task_ids = input_data['id'].to_numpy()
     
     # REPORTING PHASE
-    report_input_data(input_data, 1)
-    report_configuration(config)
-    report_classification(y_pred, y_test, y_prob)
-    
+    report_builder = report.ReportBuilder(min_spacing=10)
+    report_builder.data_summary(input_data, config)
+    report_builder.configuration(config)
+    report_builder.classification(y_pred, y_test, y_prob)
+    report_builder.recommendations(task_ids, y_test, y_prob, y_class, account_lookup, config)
+    report_builder.print_report()
+    report_builder.save_report(config['report_location'])
 
-def grid_search_evaluation(input_data, kv_model, config):
+def grid_search_evaluation(input_data, kv_model, config, account_lookup):
     pass # todo
     
     
