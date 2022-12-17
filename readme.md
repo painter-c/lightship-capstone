@@ -12,6 +12,9 @@ pip install sklearn
 pip install gensim
 pip install nltk
 pip install tomli
+pip install scipy
+pip install bertopic
+pip install umap
 ```
 
 ### Run configuration
@@ -122,3 +125,11 @@ It is important to distinguish between the cross validation and classification r
 If the program is run in optimization mode, the report will also include and optimization section that shows the hyperparameters of the best classifier for each sub-pipeline in the classifier stack. The models shown will be one of LogisticRegression, RandomForestClassifier, or AdaBoostedClassifier; each with a number of possible hyperparameters. This optimization is just an approximation of the best model and may vary from run to run. However it will generate an acceptable model each time.
 
 The main scoring metrics used for cross validation are roc_auc_ovr and accuracy. Roc auc is used because it is less sensitive to class imbalance. The ovr stands for one-vs-rest and is a method of adapting roc auc (Receiver Operator Characteristic Area Under the Curve) to multiclass problems. The accuracy score can be misleading in highly unbalanced datasets because a classifier could just guess the most frequent target class to receive a good accuracy score. Roc auc ranges from 0.5 to 1.0, where 0.5 is the worst possible model and 1.0 is the best. Roc auc is also the metric used during the optimization routine to find the best model.
+
+### Other Points of Interest
+
+To run one of the individual test files in the tests/ directory the following command should be used.
+
+```
+python -m tests/name_of_test
+```
