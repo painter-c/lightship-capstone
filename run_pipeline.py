@@ -208,6 +208,8 @@ def configure_optimized_pipeline(X, y, cv, scoring, kv_model, config):
 
 def main():
 
+    nltk.download('punkt', quiet=True)
+
     config = config_manager.load()
     loader = loading.LightshipLoader(config)
     account_lookup = loader.load_account_lookup()
