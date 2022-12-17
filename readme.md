@@ -3,7 +3,7 @@
 
 ### Prerequisites
 
-The following python packages will be necessary to run the driver program.
+To run this program you must have Python 3 installed on your system. The following python packages will be necessary.
 
 ```
 pip install numpy
@@ -16,6 +16,8 @@ pip install scipy
 pip install bertopic
 pip install umap
 ```
+
+The script *install_deps.py* in the project folder will automatically install the above packages when run.
 
 ### Run configuration
 
@@ -126,12 +128,12 @@ If the program is run in optimization mode, the report will also include and opt
 
 The main scoring metrics used for cross validation are roc_auc_ovr and accuracy. Roc auc is used because it is less sensitive to class imbalance. The ovr stands for one-vs-rest and is a method of adapting roc auc (Receiver Operator Characteristic Area Under the Curve) to multiclass problems. The accuracy score can be misleading in highly unbalanced datasets because a classifier could just guess the most frequent target class to receive a good accuracy score. Roc auc ranges from 0.5 to 1.0, where 0.5 is the worst possible model and 1.0 is the best. Roc auc is also the metric used during the optimization routine to find the best model.
 
-### Other Points of Interest
+### Running Test Files
 
-To run one of the individual test files in the tests/ directory the following command should be used.
+To run one of the individual test files in the tests/ directory the following command should be used. (Without the .py extension)
 
 ```
-python -m tests/name_of_test
+python -m src.tests.name_of_test
 ```
 
-There are two main tests of interest in the tests/ directory. The first one is test_bertopic, which is an example of topic analysis using LDA.
+There are two main tests of interest in the tests/ directory. The first one is test_bertopic, which is an example of topic analysis using Latent Dirichlet Analysis. Running this file will show a list of arbritrary topics that have been generated from the current dataset specified by the *data_path* config option. The second test of interest is test_task_teams, which is an example of classifying teams as observers rather than individuals as assignees. While this classification task was not included in the driver program, the process is nearly identical aside from two differences. One being that with team classification, the assignee_id column is used a a predictor. The other difference is that a single task can have multiple teams associated with it, therefore the input data must be flattened so that each instance only has one associated team. The same principle is true for individuals as observers, however we were unable to experiment with this due to lack of data.

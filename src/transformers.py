@@ -1,6 +1,7 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.exceptions import FitFailedWarning
 
+import nltk
 from nltk import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
@@ -116,14 +117,10 @@ class WordTokenizer(BaseEstimator, TransformerMixin):
     
 
 class StopwordFilter(BaseEstimator, TransformerMixin):
-
-    def __check_stopword_install():
-        if not nltk.is_installed('stopwords'):
-            nltk.download('stopwords')
     
     def __init__(self, columns):
         self.columns = columns
-        self.__check_stopword_install()
+        nltk.download('stopwords', quiet=True)
         self.stopwords = set(stopwords.words('english'))
         
         

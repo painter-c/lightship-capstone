@@ -58,15 +58,13 @@ def test_word_tokenizer():
 
 token_df = test_word_tokenizer()
 
-def test_stopword_filter():
-    #stopwords = loader.load_stopwords()
-    stopwords = {'complete', 'review', 'create'}
-    
-    stopword_filter = StopwordFilter(['title', 'details'], stopwords)
-    
+def test_stopword_filter(): 
+    stopword_filter = StopwordFilter(['title', 'details'])
     return stopword_filter.fit_transform(token_df)
 
 no_stopwords = test_stopword_filter()
+
+print(no_stopwords.head())
 
 
 
