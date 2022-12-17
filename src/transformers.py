@@ -123,8 +123,8 @@ class StopwordFilter(BaseEstimator, TransformerMixin):
     
     def __init__(self, columns):
         self.columns = columns
-        self.stopwords = set(stopwords.words('english'))
         self.__check_stopword_install()
+        self.stopwords = set(stopwords.words('english'))
         
         
     def fit(self, X, y=None):
