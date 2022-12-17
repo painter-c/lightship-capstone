@@ -133,3 +133,5 @@ To run one of the individual test files in the tests/ directory the following co
 ```
 python -m tests/name_of_test
 ```
+
+There are two main tests of interest in the tests/ directory. The first one is test_bertopic, which is an example of topic analysis using LDA.

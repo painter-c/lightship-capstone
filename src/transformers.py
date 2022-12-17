@@ -116,10 +116,16 @@ class WordTokenizer(BaseEstimator, TransformerMixin):
     
 
 class StopwordFilter(BaseEstimator, TransformerMixin):
+
+    def __check_stopword_install():
+        if not nltk.is_installed('stopwords'):
+            nltk.download('stopwords')
     
     def __init__(self, columns):
         self.columns = columns
         self.stopwords = set(stopwords.words('english'))
+        self.__check_stopword_install()
+        
         
     def fit(self, X, y=None):
         if not isinstance(X, pd.DataFrame):
