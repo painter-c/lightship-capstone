@@ -1,33 +1,30 @@
-import src.utils.config as config
-import src.utils.common as common
-import src.utils.loading as loading
+import src.utils.config as config_manager
 import src.pipelines as pipelines
+import src.transformers as tfm
+from src.utils.loading import LightshipLoader
 
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import make_pipeline
 
 import numpy as np
 
-cfg = config.load()
+config = config_manager.load()
+loader = LightshipLoader(config)
 
-REQUIRED_FILES = ['task.csv']
+task_df = loader.load('task.csv')
+creator_blacklist = config_manager.load_creator_blacklist()
+assignee_blacklist = config_manager.load_assignee_blacklist()
 
-data = loading.load_lightship_data(cfg, REQUIRED_FILES)
+# Preprocessing
+preprocess = make_pipeline(
+    tfm.NullEntryFilter('assignee_id'),
+    tfm.BlacklistFilter(creator_blacklist, 'creator_id'),
+    tfm.BlacklistFilter(assignee_blacklist, 'assignee_id'),
+    tfm.LowFrequencyFilter('assignee_id', config['min_class_frequency']),
+)
 
-task_data = data['task']
-
-# Initial preprocessing
-# 1. Filter null targets
-task_data = common.filter_null(task_data, 'assignee_id')
-
-# 2. Filter automated entries
-task_data = common.filter_neq(task_data, 'creator_id', cfg['automated_account_id'])
-
-# 3. Filter low frequency target classes (< 5)
-mask = common.mask_low_frequency(task_data['assignee_id'], 5)
-task_data = task_data[mask]
-
-# Randomized search
+task_df = preprocess.fit_transform(task_df)
 
 # Create the random grid
 param_grid = {
@@ -48,8 +45,8 @@ rf_random = RandomizedSearchCV(
     random_state=42,
     n_jobs=-1)
 
-y = task_data['assignee_id']
+y = task_df['assignee_id']
 
-rf_random.fit(task_data, y)
+rf_random.fit(task_df, y)
 print(rf_random.best_params_)
 print(rf_random.best_score_)

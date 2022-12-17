@@ -1,51 +1,63 @@
 # Classification of task teams
 
-import src.utils.csv_loader as csv
-import src.utils.config as cfg
-import src.utils.util_misc as misc
-import src.utils.unhash_data as ud
+import src.utils.config as config_manager
+import src.utils.common as common
+import src.pipelines as pipelines
+import src.transformers as tfm
 from src.transforms import team_target_transform
-from src.pipelines import build_pipeline_A, build_pipeline_bagofwords
+from src.utils.loading import LightshipLoader
 
 from sklearn.ensemble import StackingClassifier
-from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
-from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
 
-config = cfg.load()
+config = config_manager.load()
+loader = LightshipLoader(config)
 
-all_data = csv.load_lightship_data(config,
-                                   ['task.csv',
-                                    'task_teams.csv',
-                                    'task_title_keyword_hashes.csv',
-                                    'task_details_keyword_hashes.csv',
-                                    'team.csv',
-                                    'task_teams.csv'])
+assignee_blacklist = config_manager.load_assignee_blacklist()
+creator_blacklist = config_manager.load_creator_blacklist()
 
-task_data = all_data['task']
+task_df = loader.load('task.csv')
+task_teams = loader.load('task_teams.csv')
+
+keyword_table = loader.load_keyword_table()
 
 # Build a dataset where examples with multiple team observers are duplicated, 
 # one team observer per example.
-task_team_dict = misc.get_task_team_dict(all_data['task_teams'])
-task_data = team_target_transform(task_data, task_team_dict)
+task_team_dict = common.get_task_team_dict(task_teams)
+task_df = team_target_transform(task_df, task_team_dict)
 
-# Extract the target column
-y = task_data['team_id']
-task_data.drop('team_id', axis=1, inplace=True)
+text_columns = ['title', 'details']
 
-# Load keyword hash dictionary for text pipeline
-keyword_dict = ud.load_hash_tables((all_data['task_title_keyword_hashes'],
-                                    all_data['task_details_keyword_hashes']))
+unhash_transformer = None
+if config['unhashing_enabled']:
+    unhash_transformer = tfm.HashDecoder(loader.load_keyword_table(), text_columns)
 
-tsk_pipe = make_pipeline(build_pipeline_A(), LogisticRegression(max_iter=1000))
+stem_transformer = None
+if config['stemming_enabled']:
+    stem_transformer = tfm.WordStemmer(text_columns)
 
-bow_pipe = make_pipeline(build_pipeline_bagofwords(keyword_dict),
-                         LogisticRegression(max_iter=1000))
+preprocess = make_pipeline(
+    tfm.BlacklistFilter(creator_blacklist, 'creator_id'),
+    unhash_transformer,
+    tfm.WordTokenizer(text_columns),
+    tfm.StopwordFilter(text_columns),
+    stem_transformer,
+    tfm.WordTokenJoin(text_columns)
+)
+
+task_df = preprocess.fit_transform(task_df)
+
+X = task_df.drop('team_id', axis=1)
+y = task_df['team_id']
 
 clf = StackingClassifier([
-    ('tsk', tsk_pipe),
-    ('bow', bow_pipe)
+    ('tsk', pipelines.pipeline_task_teams()),
+    ('bow', pipelines.pipeline_count_vectorizer())
 ])
 
-scores = cross_val_score(clf, task_data, y, scoring='accuracy', cv=5)
-print(scores.mean())
+scores = cross_val_score(clf, X, y, scoring='accuracy', cv=3)
+print('accuracy', scores.mean())
+
+scores = cross_val_score(clf, X, y, scoring='roc_auc_ovr', cv=3)
+print('roc auc ovr', scores.mean())

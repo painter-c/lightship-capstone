@@ -4,16 +4,24 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.impute import SimpleImputer
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import StackingClassifier
+from sklearn.ensemble import RandomForestClassifier
 
-def clf_default():
-    return LogisticRegression()
+def clf_default_task():
+    return LogisticRegression(max_iter=2000, class_weight='balanced')
+
+def clf_default_text():
+    return RandomForestClassifier(class_weight='balanced')
 
 def ord_passthrough():
     return ColumnTransformer([
         ('passthrough', 'passthrough', ['project_id', 'creator_id'])
+    ])
+
+def ord_passthrough_teams():
+    return ColumnTransformer([
+        ('passthrough', 'passthrough', ['project_id', 'creator_id', 'assignee_id'])
     ])
 
 def pipeline_ohe():
@@ -22,38 +30,42 @@ def pipeline_ohe():
         ('ohe', OneHotEncoder(handle_unknown='ignore'))
     ])
 
+def pipeline_ohe_teams():
+    return Pipeline([
+        ('ordinal-passthrough', ord_passthrough_teams()),
+        ('ohe', OneHotEncoder(handle_unknown='ignore'))
+    ])
+
 def text_passthrough():
     return ColumnTransformer([
-        ('passthrough', 'passthrough', ['title', 'creator_id'])
+        ('passthrough', 'passthrough', ['details'])
     ])
 
-def pipeline_count_vectorizer():
+def pipeline_count_vectorizer(clf=clf_default_text()):
     return Pipeline([
         ('passthrough', text_passthrough()),
-        ('merge-string', FunctionTransformer(tf.merge_string_cols)),
-        ('count-vectorizer', CountVectorizer()),
-        ('clf', clf_default())
+        ('flatten', FunctionTransformer(tf.flatten_column)),
+        ('count-vectorizer', TfidfVectorizer()),
+        ('clf', clf)
     ])
 
-def pipeline_word_vectorizer(kv_list):
+def pipeline_word_vectorizer(kv_list, clf=clf_default_text()):
     return Pipeline([
         ('passthrough', text_passthrough()),
-        ('lowercase', FunctionTransformer(tf.to_lowercase)),
-        ('duplicates', FunctionTransformer(tf.remove_duplicate_words)),
         ('vectorizer', FunctionTransformer(tf.vectorize_words, kw_args={'kv_list':kv_list})),
-        ('clf', clf_default())
+        ('clf', clf)
     ])
 
-def pipeline_task(clf=clf_default()):
+def pipeline_task(clf=clf_default_task()):
     return Pipeline([
         ('ohe', pipeline_ohe()),
         ('impute', SimpleImputer(strategy='mean')),
         ('clf', clf)
     ])
 
-def pipeline_master(kv_list):
-    return StackingClassifier([
-        ('task', pipeline_task()),
-        ('count', pipeline_count_vectorizer()),
-        ('word', pipeline_word_vectorizer(kv_list))
+def pipeline_task_teams(clf=clf_default_task()):
+    return Pipeline([
+        ('ohe', pipeline_ohe_teams()),
+        ('impute', SimpleImputer(strategy='mean')),
+        ('clf', clf)
     ])

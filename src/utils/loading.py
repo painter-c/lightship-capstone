@@ -1,5 +1,59 @@
 import pandas as pd
 
+
+class LightshipLoader:
+    
+    def __init__(self, config):
+        self.config = config
+        self.parse_dates = {
+            'account.csv': [1,2],
+            'membership.csv': [1,2],
+            'task.csv': [1,2,8],
+            'task_event.csv': [2,3],
+            'team.csv': [1,2]
+        }
+        self.keyword_files = [
+                'task_comment_event_keyword_hashes.csv',
+                'task_details_keyword_hashes.csv',
+                'task_title_keyword_hashes.csv'
+        ]
+        
+        
+    def load(self, filename):
+        
+        data_path = self.config['data_path']
+        keyword_path = self.config['keyword_path']
+            
+        path = ''
+        if filename in self.keyword_files:
+            path = keyword_path + filename
+        else:
+            path = data_path + filename
+            
+        parse_dates = None
+        if filename in self.parse_dates:
+            parse_dates = self.parse_dates[filename]
+        
+        return pd.read_csv(path, parse_dates=parse_dates)
+    
+    
+    def load_keyword_table(self):
+        keyword_table = {}
+        for keyword_file in self.keyword_files:
+            keyword_df = self.load(keyword_file)
+            for row in keyword_df.itertuples(index=False):
+                keyword_table[row.token_hash] = row.token
+        return keyword_table
+    
+    
+    def load_account_lookup(self):
+        account_lookup = {}
+        account_df = self.load('account.csv')
+        for entry in account_df.itertuples(index=False):
+            account_lookup[entry.id] = entry.name
+        return account_lookup
+
+
 def load_lightship_data(config, files='all'):
     
     data_path = config['data_path']
@@ -74,4 +128,3 @@ def load_lightship_data(config, files='all'):
             keyword_path + 'task_title_keyword_hashes.csv')
 
     return lightship_data
-                    

@@ -1,55 +1,7 @@
-import src.utils.common as com
 import numpy as np
 import pandas as pd
 
-def to_lowercase(X):
-    return np.char.lower(X.astype(str))
-
-
-__rem_dup_func = np.frompyfunc(com.remove_duplicates, 1, 1)
-
-def remove_duplicate_words(X):
-    out = None
-    for col in X.T:
-        new_col = __rem_dup_func(col)
-        new_col = new_col.reshape(-1, 1)
-        if out is None:
-            out = new_col
-        else:
-            out = np.hstack((out, new_col))
-    return out
-
-
-_extract_func = np.vectorize(com.extract_words_by_tag,
-                             excluded={'tag', 'spacy_nlp'})
-
-def tag_words(X, tag, spacy_nlp):
-    out = None
-    for col in X.T:
-        new_col = _extract_func(col, tag, spacy_nlp)
-        new_col = new_col.reshape(-1, 1)
-        if out is None:
-            out = new_col
-        else:
-            out = np.hstack((out, new_col))
-    return out
-    
-
-def unhash_keywords(df, hash_table):
-    out = []
-    for name in df.columns:
-        col = df[name]
-        col = col.apply(com.unhash_str, args=(hash_table,))
-        col = col.to_numpy().reshape(-1, 1)
-        if len(out):
-            out = np.hstack((out, col))
-        else:
-            out = col
-    return out
-
-
-def unhash_column(column, keyword_hash):
-    return column.apply(com.unhash_str, args=(keyword_hash,))
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 
 def __vectorize_word_column(col, kv_list):
@@ -81,17 +33,6 @@ def vectorize_words(X, kv_list):
             out = embed_col
         else:
             out = np.hstack((out, embed_col))
-    return out
-
-
-__merge_str_func = np.frompyfunc(com.join_string, 2, 1)
-
-def merge_string_cols(X):
-    X_T = X.T
-    out = X_T[0]
-    for i in range(1, X_T.shape[0]):
-        curr = X_T[i]
-        out = __merge_str_func(out, curr)
     return out
 
 
@@ -127,6 +68,10 @@ def timeofday_transform(df):
     return out
 
 
+def flatten_column(column):
+    return column.flatten()
+
+
 # Each task example may have zero or more teams assigned to it as 
 # collaborators. This function generates a task example for each unique pair 
 # of (task_id, team_id).
@@ -139,4 +84,26 @@ def team_target_transform(task_df, team_dict):
     team_df = pd.DataFrame(data=team_list, columns = ['task_id', 'team_id'])
     result = task_df.merge(team_df, left_on='id', right_on='task_id')
     result.drop('task_id', axis=1, inplace=True)
-    return result  
+    return result
+
+
+def extract_tfidf_keywords(series, n_keywords):
+    docs = series.to_numpy()
+    cv = CountVectorizer(max_df=0.85)
+    tf = TfidfTransformer(smooth_idf = True, use_idf = True)
+    sparse_tfidf = tf.fit_transform(cv.fit_transform(docs))
+    features = cv.get_feature_names()
+    #
+    result = []
+    for index in range(1, sparse_tfidf.indptr.shape[0]):
+        a = sparse_tfidf.indptr[index-1]
+        b = sparse_tfidf.indptr[index]
+        row_terms = [features[i] for i in sparse_tfidf.indices[a:b]]
+        row_values = sparse_tfidf.data[a:b]
+        #
+        row = list(zip(row_terms, row_values))
+        row.sort(key=lambda x: x[1], reverse=True)
+        row = [item[0] for item in row[:min(len(row), n_keywords)]]
+        doc = ' '.join(row)
+        result.append(doc)
+    return pd.Series(result, dtype=str)
