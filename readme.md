@@ -108,7 +108,7 @@ Running the program with no command line options will result in two different ou
 python -m run_pipeline -optimize
 ```
 
-This will automatically find a good model for the particular input configuration and cache it for further use. Note that if you wish to run the default pipeline while a there and optimized model that has been cached, you must either delete the cached model from the cache/ directory or run the program with the following command line argument.
+This will automatically find a good model for the particular input configuration and cache it for further use. Note that if you wish to run the default pipeline while  there is an optimized model that has been cached, you must either delete the cached model from the cache/ directory or run the program with the following command line argument.
 
 ```
 python -m run_pipeline -usedefault
@@ -136,4 +136,4 @@ To run one of the individual test files in the tests/ directory the following co
 python -m src.tests.name_of_test
 ```
 
-There are two main tests of interest in the tests/ directory. The first one is test_bertopic, which is an example of topic analysis using Latent Dirichlet Analysis. Running this file will show a list of arbritrary topics that have been generated from the current dataset specified by the *data_path* config option. The second test of interest is test_task_teams, which is an example of classifying teams as observers rather than individuals as assignees. While this classification task was not included in the driver program, the process is nearly identical aside from two differences. One being that with team classification, the assignee_id column is used a a predictor. The other difference is that a single task can have multiple teams associated with it, therefore the input data must be flattened so that each instance only has one associated team. The same principle is true for individuals as observers, however we were unable to experiment with this due to lack of data.
+There are two main tests of interest in the tests/ directory. The first one is test_bertopic, which is an example of topic analysis using Latent Dirichlet Analysis. Running this file will show a list of arbritrary topics that have been generated from the current dataset specified by the *data_path* config option. The second test of interest is test_task_teams, which is an example of classifying teams as observers rather than individuals as assignees. While this classification task was not included in the driver program, the process is nearly identical aside from two differences. One being that with team classification, the assignee_id column is used as a predictor. The other difference is that a single task can have multiple teams associated with it, therefore the input data must be flattened so that each instance only has one associated team. The same principle is true for individuals as observers, however we were unable to experiment with this due to lack of data.
